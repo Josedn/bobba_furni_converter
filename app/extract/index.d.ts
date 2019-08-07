@@ -1,1 +1,1 @@
-export function extractFurni(fileName: string): Promise<void>;
+export function extractFurni(fileName: string): Promise<string>;

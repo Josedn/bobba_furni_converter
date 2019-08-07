@@ -13,14 +13,19 @@ export type FurniOffsetAssetDictionary = {
     [id: string]: FurniOffsetAsset;
 };
 
-//misc
-export type FurniOffsetType = "furniture_multistate" | "furniture_basic" | "furniture_animated";
-
 //logic
 export type FurniOffsetLogic = {
     dimensions: { x: number, y: number, z: number },
     directions: number[],
-    //type: FurniOffsetType,
+};
+
+//export type FurniOffsetLogicType = "furniture_multistate" | "furniture_basic" | "furniture_animated";
+
+//index
+export type FurniOffsetIndex = {
+    type: string,
+    visualization: string,
+    logic: string,
 };
 
 //visualization
@@ -57,7 +62,6 @@ export type FurniOffsetVisualizationData = {
     animations?: { [animationId: number]: FurniOffsetVisualizationAnimation },
 };
 export type FurniOffsetVisualization = {
-    //type: FurniOffsetType,
     1: FurniOffsetVisualizationData,
     32: FurniOffsetVisualizationData,
     64: FurniOffsetVisualizationData,
@@ -65,10 +69,10 @@ export type FurniOffsetVisualization = {
 
 //furni.json
 export type FurniOffset = {
-    //type: string;
     assets: FurniOffsetAssetDictionary;
     visualization: FurniOffsetVisualization;
     logic: FurniOffsetLogic;
+    index: FurniOffsetIndex;
 };
 
 const parseXml = (xmlData: string): any => {
@@ -136,6 +140,18 @@ const generateLogicFromXml = (rawXml: string): FurniOffsetLogic | null => {
             directions
         };
         return logic;
+    }
+    return null;
+};
+
+const generateIndexFromXml = (rawXml: string): FurniOffsetIndex | null => {
+    const parsed = parseXml(rawXml);
+    if (parsed != null && parsed.object != null) {
+        return {
+            logic: parsed.object.logic,
+            type: parsed.object.type,
+            visualization: parsed.object.visualization,
+        };
     }
     return null;
 };
@@ -249,15 +265,17 @@ const generateVisualizationFromXml = (rawXml: string): FurniOffsetVisualization 
     return null;
 };
 
-export const generateOffsetFromXml = (assetsXml: string, logicXml: string, visualizationXml: string): FurniOffset | null => {
+export const generateOffsetFromXml = (assetsXml: string, logicXml: string, visualizationXml: string, indexXml: string): FurniOffset | null => {
     const assets = generateAssetsFromXml(assetsXml);
     const logic = generateLogicFromXml(logicXml);
     const visualization = generateVisualizationFromXml(visualizationXml);
-    if (assets != null && logic != null && visualization != null) {
+    const index = generateIndexFromXml(indexXml);
+    if (assets != null && logic != null && visualization != null && index != null) {
         return {
             assets,
             logic,
             visualization,
+            index
         };
     }
     return null;

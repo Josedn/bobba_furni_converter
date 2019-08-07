@@ -51,7 +51,7 @@ export const extractFurni = (swfFileName) => {
                     const fileName = assetMap[image.characterId].substr(swfFileName.length - 3) + ".png";
                     fs.writeFile(folderName + "/" + fileName, image.imgData, "binary", function (err) { });
                 });
-                resolve();
+                resolve(folderName);
             }).catch(err => reject(err));
         }).catch(err => reject(err));
     });
