@@ -3,10 +3,11 @@ import * as parser from 'fast-xml-parser';
 //assets
 export type FurniOffsetAsset = {
     name: string,
-    flipH?: number,
-    source?: string,
+    exists: boolean,
     x: number,
     y: number,
+    flipH?: number,
+    source?: string,
 };
 
 export type FurniOffsetAssetDictionary = {
@@ -99,19 +100,21 @@ const parseXml = (xmlData: string): any => {
     return null;
 };
 
-const generateAssetsFromXml = (rawXml: string): FurniOffsetAssetDictionary | null => {
+const generateAssetsFromXml = (rawXml: string, folderAssets: string[]): FurniOffsetAssetDictionary | null => {
     const parsed = parseXml(rawXml);
     const assetDictionary: FurniOffsetAssetDictionary = {};
 
     if (parsed != null) {
         const assets = parsed.assets.asset as any[];
         assets.forEach(rawAsset => {
+            const exists = folderAssets.find(value => value.includes(rawAsset.name)) != null;
             const data: FurniOffsetAsset = {
                 name: rawAsset.name,
                 flipH: rawAsset.flipH,
                 source: rawAsset.source,
                 x: rawAsset.x,
-                y: rawAsset.y
+                y: rawAsset.y,
+                exists,
             };
 
             assetDictionary[data.name] = data;
@@ -265,8 +268,8 @@ const generateVisualizationFromXml = (rawXml: string): FurniOffsetVisualization 
     return null;
 };
 
-export const generateOffsetFromXml = (assetsXml: string, logicXml: string, visualizationXml: string, indexXml: string): FurniOffset | null => {
-    const assets = generateAssetsFromXml(assetsXml);
+export const generateOffsetFromXml = (assetsXml: string, logicXml: string, visualizationXml: string, indexXml: string, folderAssets: string[]): FurniOffset | null => {
+    const assets = generateAssetsFromXml(assetsXml, folderAssets);
     const logic = generateLogicFromXml(logicXml);
     const visualization = generateVisualizationFromXml(visualizationXml);
     const index = generateIndexFromXml(indexXml);

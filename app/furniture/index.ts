@@ -29,7 +29,7 @@ export const generateOffset = (folderName: string, offsetFileName: string) => {
         const logicFile = fs.readFileSync(folderName + "/" + logicXml, 'utf-8');
         const indexFile = fs.readFileSync(folderName + "/" + indexXml, 'utf-8');
 
-        const offset = generateOffsetFromXml(assetsFile, logicFile, visualizationFile, indexFile);
+        const offset = generateOffsetFromXml(assetsFile, logicFile, visualizationFile, indexFile, allFiles);
         if (offset == null) {
             throw new Error("Cannot generate offset");
         }
