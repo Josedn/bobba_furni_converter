@@ -1,0 +1,1 @@
+export function extractFurni(fileName: string): Promise<void>;

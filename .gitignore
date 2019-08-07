@@ -48,6 +48,9 @@ jspm_packages/
 # TypeScript v1 declaration files
 typings/
 
+# fuild folder
+build/
+
 # TypeScript cache
 *.tsbuildinfo
 
@@ -91,4 +94,8 @@ typings/
 # DynamoDB Local files
 .dynamodb/
 
-# End of https://www.gitignore.io/api/node
+# swf files
+*.swf
+
+# extracted files
+extracted/
