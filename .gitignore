@@ -99,3 +99,6 @@ build/
 
 # extracted files
 extracted/
+
+# downloaded files
+downloaded/

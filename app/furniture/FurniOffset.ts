@@ -1,4 +1,4 @@
-import * as parser from 'fast-xml-parser';
+import { parseXml, parseXmlArray } from "./utils";
 
 //assets
 export type FurniOffsetAsset = {
@@ -76,30 +76,6 @@ export type FurniOffset = {
     index: FurniOffsetIndex;
 };
 
-const parseXml = (xmlData: string): any => {
-    const options = {
-        attributeNamePrefix: "",
-        textNodeName: "#text",
-        ignoreAttributes: false,
-        ignoreNameSpace: true,
-        allowBooleanAttributes: true,
-        parseNodeValue: true,
-        parseAttributeValue: true,
-        trimValues: true,
-        cdataTagName: "__cdata", //default is 'false'
-        cdataPositionChar: "\\c",
-        localeRange: "", //To support non english character in tag/attribute values.
-        parseTrueNumberOnly: false,
-    };
-
-    if (parser.validate(xmlData) === true) { //optional (it'll return an object in case it's not valid)
-        const jsonObj = parser.parse(xmlData, options);
-        return jsonObj;
-    }
-
-    return null;
-};
-
 const generateAssetsFromXml = (rawXml: string, folderAssets: string[]): FurniOffsetAssetDictionary | null => {
     const parsed = parseXml(rawXml);
     const assetDictionary: FurniOffsetAssetDictionary = {};
@@ -157,13 +133,6 @@ const generateIndexFromXml = (rawXml: string): FurniOffsetIndex | null => {
         };
     }
     return null;
-};
-
-const parseXmlArray = (data: any): any[] => {
-    if (data instanceof Array) {
-        return data;
-    }
-    return [data];
 };
 
 const generateVisualizationFromXml = (rawXml: string): FurniOffsetVisualization | null => {
