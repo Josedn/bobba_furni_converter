@@ -2,6 +2,9 @@ import * as fs from "fs";
 import * as https from "https";
 import * as http from "http";
 
+import { generateFurnidataFromXml } from "../furniture/Furnidata";
+import PromiseQueue from "./PromiseQueue";
+
 const downloadFile = (url: string, dest: string) => {
     return new Promise((resolve, reject) => {
         const file = fs.createWriteStream(dest);
@@ -35,17 +38,72 @@ const downloadFile = (url: string, dest: string) => {
     });
 };
 
-export const downloadFurniture = (hofFurniUrl: string, furnidataUrl: string, useSourceRevision: boolean, useOutputRevision: boolean) => {
+export const downloadFurniture = (hofFurniUrl: string, furnidataUrl: string, useSourceRevision: boolean) => {
     const rootFolder = "downloaded/";
     if (!fs.existsSync(rootFolder)) {
         fs.mkdirSync(rootFolder);
     }
 
     console.log("Downloading furnidata");
-    downloadFile(furnidataUrl, rootFolder + 'furnidata.xml').then(() => {
-        console.log("Downloaded");
-    }).catch(err => {
+    //downloadFile(furnidataUrl, rootFolder + "furnidata.xml").then(() => {
+    const furnidataXml = fs.readFileSync(rootFolder + "furnidata.xml", "utf-8");
+    const furnidata = generateFurnidataFromXml(furnidataXml);
+
+    const queue = new PromiseQueue(10);
+
+    if (furnidata != null) {
+        fs.writeFileSync(rootFolder + "furnidata.json", JSON.stringify(furnidata), 'utf-8');
+        console.log("Furnidata converted");
+
+        for (let roomItemId in furnidata.roomitemtypes) {
+            const furni = furnidata.roomitemtypes[roomItemId];
+            let furniAssetName = furni.classname;
+            if (furniAssetName.includes("*")) {
+                furniAssetName = furniAssetName.split("*")[0];
+            }
+            const downloadUrl = hofFurniUrl + furni.revision + "/" + furniAssetName + ".swf";
+            const outputUrl = rootFolder + furniAssetName + ".swf";
+
+            if (!fs.existsSync(outputUrl)) {
+
+                queue.push(() => downloadFile(downloadUrl, outputUrl).then(() => {
+                    console.log(furniAssetName + " ok");
+                }).catch(err => {
+                    console.log(furniAssetName + " error");
+                }));
+
+            } else {
+                console.log(furniAssetName + " already downloaded");
+            }
+        }
+
+        for (let wallItemId in furnidata.wallitemtypes) {
+            const furni = furnidata.wallitemtypes[wallItemId];
+            let furniAssetName = furni.classname;
+            if (furniAssetName.includes("*")) {
+                furniAssetName = furniAssetName.split("*")[0];
+            }
+            const downloadUrl = hofFurniUrl + furni.revision + "/" + furniAssetName + ".swf";
+            const outputUrl = rootFolder + furniAssetName + ".swf";
+
+            if (!fs.existsSync(outputUrl)) {
+
+                queue.push(() => downloadFile(downloadUrl, outputUrl).then(() => {
+                    console.log(furniAssetName + " ok");
+                }).catch(err => {
+                    console.log(furniAssetName + " error");
+                }));
+
+            } else {
+                console.log(furniAssetName + " already downloaded");
+            }
+        }
+    } else {
+        console.log("Error converting furnidata");
+    }
+
+    /*}).catch(err => {
         console.log("Error downloading furnidata: " + err);
-    });
+    });*/
 
 };

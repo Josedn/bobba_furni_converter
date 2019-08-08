@@ -3,7 +3,6 @@ import * as fs from "fs";
 import { extractFurni } from './extract';
 import { generateOffset } from "./furniture";
 import { downloadFurniture } from "./downloader";
-import { generateFurnidataFromXml } from "./furniture/Furnidata";
 
 var myArgs = process.argv.slice(2);
 if (myArgs.length === 0) {
@@ -20,16 +19,5 @@ if (myArgs.length === 0) {
         }
     });*/
 
-    //downloadFurniture("http://images.habbo.com/dcr/hof_furni/", "https://www.habbo.com/gamedata/furnidata_xml/2ef37510624cb935bea0570606e6029b74b757d2", true, false);
-
-    try {
-        const furnidataXml = fs.readFileSync("downloaded/furnidata.xml", 'utf-8');
-        const furnidata = generateFurnidataFromXml(furnidataXml);
-        if (furnidata != null) {
-            console.log(furnidata);
-        }
-    }
-    catch (err) {
-        console.log(err);
-    }
+    downloadFurniture("http://images.habbo.com/dcr/hof_furni/", "https://www.habbo.com/gamedata/furnidata_xml/2ef37510624cb935bea0570606e6029b74b757d2", true);
 }

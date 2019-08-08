@@ -16,6 +16,7 @@
     "@gizeta/swf-reader": "^1.0.0",
     "fast-xml-parser": "^3.12.19",
     "lodash": "^4.17.15",
+    "p-queue": "^6.1.0",
     "swf-extract": "^1.1.0",
     "ts-node-dev": "^1.0.0-pre.40",
     "typescript": "^3.5.3"
