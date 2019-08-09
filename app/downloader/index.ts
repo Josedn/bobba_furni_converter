@@ -2,8 +2,9 @@ import * as fs from "fs";
 import * as https from "https";
 import * as http from "http";
 
-import { generateFurnidataFromXml } from "../furniture/Furnidata";
+import { generateFurnidataFromXml, Furnidata } from "../furniture/Furnidata";
 import PromiseQueue from "./PromiseQueue";
+import { rejects } from "assert";
 
 const downloadFile = (url: string, dest: string) => {
     return new Promise((resolve, reject) => {
@@ -25,11 +26,17 @@ const downloadFile = (url: string, dest: string) => {
             host: parsedUrl.host,
             path: parsedUrl.pathname,
         }, response => {
-            response.pipe(file);
-            file.on('finish', () => {
-                file.close();  // close() is async, call cb after close completes.
-                resolve(dest);
-            });
+            if (response.statusCode === 200) {
+                response.pipe(file);
+                file.on('finish', () => {
+                    file.close();
+                    resolve(dest);
+                });
+            } else {
+                fs.unlink(dest, () => { });
+                reject('wrong response: ' + response.statusCode);
+            }
+
 
         }).on('error', err => {
             fs.unlink(dest, () => { });
@@ -38,72 +45,85 @@ const downloadFile = (url: string, dest: string) => {
     });
 };
 
-export const downloadFurniture = (hofFurniUrl: string, furnidataUrl: string, useSourceRevision: boolean) => {
-    const rootFolder = "downloaded/";
+export const downloadFurniture = (destFolder: string, hofFurniUrl: string, furnidata: Furnidata, maxConcurrentDownloads: number) => {
+    const queue = new PromiseQueue(maxConcurrentDownloads);
+
+    if (!fs.existsSync(destFolder)) {
+        fs.mkdirSync(destFolder);
+    }
+
+    for (let roomItemId in furnidata.roomitemtypes) {
+        const furni = furnidata.roomitemtypes[roomItemId];
+        let furniAssetName = furni.classname;
+        if (furniAssetName.includes("*")) {
+            furniAssetName = furniAssetName.split("*")[0];
+        }
+        const downloadUrl = hofFurniUrl + furni.revision + "/" + furniAssetName + ".swf";
+        const outputUrl = destFolder + "/" + furniAssetName + ".swf";
+
+        if (!fs.existsSync(outputUrl)) {
+
+            queue.push(() => downloadFile(downloadUrl, outputUrl).then(() => {
+                console.log(furniAssetName + " ok");
+            }).catch(err => {
+                console.log(furniAssetName + " error");
+            }));
+
+        } else {
+            console.log(furniAssetName + " already downloaded");
+        }
+    }
+
+    for (let wallItemId in furnidata.wallitemtypes) {
+        const furni = furnidata.wallitemtypes[wallItemId];
+        let furniAssetName = furni.classname;
+        if (furniAssetName.includes("*")) {
+            furniAssetName = furniAssetName.split("*")[0];
+        }
+        const downloadUrl = hofFurniUrl + furni.revision + "/" + furniAssetName + ".swf";
+        const outputUrl = destFolder + "/" + furniAssetName + ".swf";
+
+        if (!fs.existsSync(outputUrl)) {
+
+            queue.push(() => downloadFile(downloadUrl, outputUrl).then(() => {
+                console.log(furniAssetName + " ok");
+            }).catch(err => {
+                console.log(furniAssetName + " error");
+            }));
+
+        } else {
+            console.log(furniAssetName + " already downloaded");
+        }
+    }
+};
+
+export const convertFurnidata = (rootFolder: string, destFolder: string): Furnidata | null => {
+    if (!fs.existsSync(rootFolder + "/furnidata.xml")) {
+        return null;
+    }
+    if (!fs.existsSync(destFolder)) {
+        fs.mkdirSync(destFolder);
+    }
+    const furnidataXml = fs.readFileSync(rootFolder + "/furnidata.xml", "utf-8");
+    const furnidata = generateFurnidataFromXml(furnidataXml);
+    
+
+    if (furnidata != null) {
+        fs.writeFileSync(destFolder + "/" + "furnidata.json", JSON.stringify(furnidata), 'utf-8');
+        console.log("Furnidata converted");
+        return furnidata;
+    } else {
+        console.log("Error converting furnidata");
+        return null;
+    }
+};
+
+export const downloadFurnidata = (rootFolder: string, furnidataUrl: string): Promise<void> => {
     if (!fs.existsSync(rootFolder)) {
         fs.mkdirSync(rootFolder);
     }
 
     console.log("Downloading furnidata");
-    //downloadFile(furnidataUrl, rootFolder + "furnidata.xml").then(() => {
-    const furnidataXml = fs.readFileSync(rootFolder + "furnidata.xml", "utf-8");
-    const furnidata = generateFurnidataFromXml(furnidataXml);
 
-    const queue = new PromiseQueue(10);
-
-    if (furnidata != null) {
-        fs.writeFileSync(rootFolder + "furnidata.json", JSON.stringify(furnidata), 'utf-8');
-        console.log("Furnidata converted");
-
-        for (let roomItemId in furnidata.roomitemtypes) {
-            const furni = furnidata.roomitemtypes[roomItemId];
-            let furniAssetName = furni.classname;
-            if (furniAssetName.includes("*")) {
-                furniAssetName = furniAssetName.split("*")[0];
-            }
-            const downloadUrl = hofFurniUrl + furni.revision + "/" + furniAssetName + ".swf";
-            const outputUrl = rootFolder + furniAssetName + ".swf";
-
-            if (!fs.existsSync(outputUrl)) {
-
-                queue.push(() => downloadFile(downloadUrl, outputUrl).then(() => {
-                    console.log(furniAssetName + " ok");
-                }).catch(err => {
-                    console.log(furniAssetName + " error");
-                }));
-
-            } else {
-                console.log(furniAssetName + " already downloaded");
-            }
-        }
-
-        for (let wallItemId in furnidata.wallitemtypes) {
-            const furni = furnidata.wallitemtypes[wallItemId];
-            let furniAssetName = furni.classname;
-            if (furniAssetName.includes("*")) {
-                furniAssetName = furniAssetName.split("*")[0];
-            }
-            const downloadUrl = hofFurniUrl + furni.revision + "/" + furniAssetName + ".swf";
-            const outputUrl = rootFolder + furniAssetName + ".swf";
-
-            if (!fs.existsSync(outputUrl)) {
-
-                queue.push(() => downloadFile(downloadUrl, outputUrl).then(() => {
-                    console.log(furniAssetName + " ok");
-                }).catch(err => {
-                    console.log(furniAssetName + " error");
-                }));
-
-            } else {
-                console.log(furniAssetName + " already downloaded");
-            }
-        }
-    } else {
-        console.log("Error converting furnidata");
-    }
-
-    /*}).catch(err => {
-        console.log("Error downloading furnidata: " + err);
-    });*/
-
+    return downloadFile(furnidataUrl, rootFolder + "/furnidata.xml") as Promise<void>;
 };

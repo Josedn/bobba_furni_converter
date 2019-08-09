@@ -1,6 +1,7 @@
 const { readFromBufferP, extractImages } = require('swf-extract');
 const SWFReader = require('@gizeta/swf-reader');
 const fs = require("fs");
+const path = require("path");
 
 function generateMap(swf) {
     const assetMap = {};
@@ -26,15 +27,18 @@ function extractXmls(swf, assetMap, folderName, swfFileName) {
     }
 }
 
-export const extractFurni = (swfFileName) => {
+export const extractFurni = (rootFolder, swfFileName) => {
     const rawData = fs.readFileSync(swfFileName);
 
     const swfObject = SWFReader.readSync(swfFileName);
     const assetMap = generateMap(swfObject);
 
-    const folderName = "extracted/" + swfFileName.substr(0, swfFileName.length - 4);
-    if (!fs.existsSync("extracted")) {
-        fs.mkdirSync("extracted");
+    let basename = path.basename(swfFileName);
+    basename = basename.substr(0, basename.length - 4);
+
+    const folderName = rootFolder + "/" + basename;
+    if (!fs.existsSync(rootFolder)) {
+        fs.mkdirSync(rootFolder);
     }
     if (!fs.existsSync(folderName)) {
         fs.mkdirSync(folderName);
@@ -48,7 +52,7 @@ export const extractFurni = (swfFileName) => {
             // the result of calling `extractImages` resolves to an Array of Promises
             Promise.all(extractImages(swf.tags)).then(ts => {
                 ts.forEach(image => {
-                    const fileName = assetMap[image.characterId].substr(swfFileName.length - 3) + ".png";
+                    const fileName = assetMap[image.characterId].substr(basename.length + 1) + ".png";
                     fs.writeFile(folderName + "/" + fileName, image.imgData, "binary", function (err) { });
                 });
                 resolve(folderName);

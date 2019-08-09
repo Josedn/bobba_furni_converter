@@ -98,7 +98,7 @@ build/
 *.swf
 
 # extracted files
-extracted/
+converted/
 
 # downloaded files
-downloaded/
+to_convert/

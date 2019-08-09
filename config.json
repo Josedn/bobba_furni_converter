@@ -1,0 +1,10 @@
+{
+  "downloadFurnidata": false,
+  "downloadFurniture": false,
+  "convertFurnidata": false,
+  "convertFurniture": true,
+  "hofFurniUrl": "http://images.habbo.com/dcr/hof_furni/",
+  "furnidataUrl": "https://www.habbo.com/gamedata/furnidata_xml/a1373473ff17e356167c3f840145e224e61b00f0",
+  "useSourceRevisionFolder": true,
+  "maxConcurrentDownloads": 10
+}

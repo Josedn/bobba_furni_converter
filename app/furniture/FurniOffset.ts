@@ -79,6 +79,7 @@ export type FurniOffset = {
 const generateAssetsFromXml = (rawXml: string, folderAssets: string[]): FurniOffsetAssetDictionary | null => {
     const parsed = parseXml(rawXml);
     const assetDictionary: FurniOffsetAssetDictionary = {};
+    console.log(folderAssets);
 
     if (parsed != null) {
         const assets = parsed.assets.asset as any[];
