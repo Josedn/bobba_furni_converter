@@ -47,12 +47,12 @@ const continueWithFurnidata = (config: Config) => {
         const files = fs.readdirSync(DOWNLOADED_FOLDER);
         files.forEach(fileName => {
             if (fileName.endsWith(".swf")) {
-                extractFurni(CONVERTED_FOLDER, fileName).then(folderName => {
+                extractFurni(CONVERTED_FOLDER, DOWNLOADED_FOLDER + "/" + fileName).then(folderName => {
                     try {
                         generateOffset(folderName, "furni.json");
                         console.log(fileName + " converted");
                     } catch (err) {
-                        console.log(fileName + " error");
+                        console.log(fileName + " error: " + err);
                     }
                 });
             }

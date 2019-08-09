@@ -15,26 +15,27 @@ function generateMap(swf) {
     return assetMap;
 }
 
-function extractXmls(swf, assetMap, folderName, swfFileName) {
+function extractXmls(swf, assetMap, folderName, basename) {
     for (let tag of swf.tags) {
         if (tag.header.code == 87) {
             const buffer = tag.data;
             const characterId = buffer.readUInt16LE();
-            const fileName = assetMap[characterId].substr(swfFileName.length - 3) + ".xml";
+            const fileName = assetMap[characterId].substr(basename.length + 1) + ".xml";
 
             fs.writeFile(folderName + "/" + fileName, buffer.subarray(6), "binary", function (err) { });
         }
     }
 }
 
-export const extractFurni = (rootFolder, swfFileName) => {
-    const rawData = fs.readFileSync(swfFileName);
+export const extractFurni = (rootFolder, swfFilePath) => {
+    const rawData = fs.readFileSync(swfFilePath);
 
-    const swfObject = SWFReader.readSync(swfFileName);
+    const swfObject = SWFReader.readSync(swfFilePath);
     const assetMap = generateMap(swfObject);
 
-    let basename = path.basename(swfFileName);
-    basename = basename.substr(0, basename.length - 4);
+    const basename = path.basename(swfFilePath).split(".")[0];
+
+    console.log(basename);
 
     const folderName = rootFolder + "/" + basename;
     if (!fs.existsSync(rootFolder)) {
@@ -44,7 +45,7 @@ export const extractFurni = (rootFolder, swfFileName) => {
         fs.mkdirSync(folderName);
     }
 
-    extractXmls(swfObject, assetMap, folderName, swfFileName);
+    extractXmls(swfObject, assetMap, folderName, basename);
 
     return new Promise((resolve, reject) => {
         const swf = readFromBufferP(rawData);
