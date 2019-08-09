@@ -3,6 +3,7 @@ import * as fs from "fs";
 import { extractFurni } from './extract';
 import { generateOffset } from "./furniture";
 import { downloadFurnidata, convertFurnidata, downloadFurniture } from "./downloader";
+import PromiseQueue from "./downloader/PromiseQueue";
 
 type Config = {
     downloadFurnidata: boolean,
@@ -45,16 +46,21 @@ const continueWithFurnidata = (config: Config) => {
 
     if (config.convertFurniture && fs.existsSync(DOWNLOADED_FOLDER)) {
         const files = fs.readdirSync(DOWNLOADED_FOLDER);
+
+        const queue = new PromiseQueue(10);
+
         files.forEach(fileName => {
             if (fileName.endsWith(".swf")) {
-                extractFurni(CONVERTED_FOLDER, DOWNLOADED_FOLDER + "/" + fileName).then(folderName => {
+                queue.push(() => extractFurni(CONVERTED_FOLDER, DOWNLOADED_FOLDER + "/" + fileName).then(folderName => {
                     try {
                         generateOffset(folderName, "furni.json");
                         console.log(fileName + " converted");
                     } catch (err) {
                         console.log(fileName + " error: " + err);
                     }
-                });
+                }).catch(err => {
+                    console.log(fileName + " error: " + err);
+                }));
             }
         });
     }

@@ -64,7 +64,7 @@ export type FurniOffsetVisualizationData = {
 };
 export type FurniOffsetVisualization = {
     1: FurniOffsetVisualizationData,
-    32: FurniOffsetVisualizationData,
+    32?: FurniOffsetVisualizationData,
     64: FurniOffsetVisualizationData,
 };
 
@@ -81,7 +81,7 @@ const generateAssetsFromXml = (rawXml: string, folderAssets: string[]): FurniOff
     const assetDictionary: FurniOffsetAssetDictionary = {};
 
     if (parsed != null) {
-        const assets = parsed.assets.asset as any[];
+        const assets = parseXmlArray(parsed.assets.asset);
         assets.forEach(rawAsset => {
             const exists = folderAssets.find(value => value.includes(rawAsset.name)) != null;
             const data: FurniOffsetAsset = {
@@ -105,10 +105,14 @@ const generateLogicFromXml = (rawXml: string): FurniOffsetLogic | null => {
     const parsed = parseXml(rawXml);
     if (parsed != null) {
         const rawLogic = parsed.objectData;
-        const rawDirections = parseXmlArray(rawLogic.model.directions.direction);
-        const directions = rawDirections.map(rawDir => {
-            return rawDir.id as number;
-        });
+        const directions: number[] = [];
+        if (rawLogic.model.directions != null) {
+            const rawDirections = parseXmlArray(rawLogic.model.directions.direction);
+            rawDirections.forEach(rawDir => {
+                directions.push(rawDir.id);
+            });
+        }
+
         const logic: FurniOffsetLogic = {
             //type: rawLogic.type,
             dimensions: {
@@ -138,7 +142,7 @@ const generateIndexFromXml = (rawXml: string): FurniOffsetIndex | null => {
 const generateVisualizationFromXml = (rawXml: string): FurniOffsetVisualization | null => {
     const parsed = parseXml(rawXml);
     if (parsed != null) {
-        const rawVisualization = parsed.visualizationData.graphics.visualization as any[];
+        const rawVisualization = parsed.visualizationData.graphics != null ? parseXmlArray(parsed.visualizationData.graphics.visualization) : parseXmlArray(parsed.visualizationData.visualization);
         const parsedVisualizations = rawVisualization.map(rawVisualizationData => {
             const visualizationData: FurniOffsetVisualizationData = {
                 angle: rawVisualizationData.angle,
@@ -226,7 +230,7 @@ const generateVisualizationFromXml = (rawXml: string): FurniOffsetVisualization 
         const icon = parsedVisualizations.find(value => value.size === 1);
         const small = parsedVisualizations.find(value => value.size === 32);
         const large = parsedVisualizations.find(value => value.size === 64);
-        if (icon != null && small != null && large != null) {
+        if (icon != null && large != null) {
             return {
                 1: icon,
                 32: small,
@@ -242,6 +246,7 @@ export const generateOffsetFromXml = (assetsXml: string, logicXml: string, visua
     const logic = generateLogicFromXml(logicXml);
     const visualization = generateVisualizationFromXml(visualizationXml);
     const index = generateIndexFromXml(indexXml);
+
     if (assets != null && logic != null && visualization != null && index != null) {
         return {
             assets,

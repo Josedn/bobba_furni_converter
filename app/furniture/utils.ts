@@ -25,6 +25,9 @@ export const parseXml = (xmlData: string): any => {
 };
 
 export const parseXmlArray = (data: any): any[] => {
+    if (data == null) {
+        return [];
+    }
     if (data instanceof Array) {
         return data;
     }

@@ -35,8 +35,6 @@ export const extractFurni = (rootFolder, swfFilePath) => {
 
     const basename = path.basename(swfFilePath).split(".")[0];
 
-    console.log(basename);
-
     const folderName = rootFolder + "/" + basename;
     if (!fs.existsSync(rootFolder)) {
         fs.mkdirSync(rootFolder);
@@ -54,7 +52,7 @@ export const extractFurni = (rootFolder, swfFilePath) => {
             Promise.all(extractImages(swf.tags)).then(ts => {
                 ts.forEach(image => {
                     const fileName = assetMap[image.characterId].substr(basename.length + 1) + ".png";
-                    fs.writeFile(folderName + "/" + fileName, image.imgData, "binary", function (err) { });
+                    fs.writeFileSync(folderName + "/" + fileName, image.imgData, "binary");
                 });
                 resolve(folderName);
             }).catch(err => reject(err));
